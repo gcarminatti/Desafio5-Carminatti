@@ -6,12 +6,15 @@ import handlebars from "express-handlebars";
 import __dirname from "./utils.js";
 import viewsRouter from "./routes/userRoutes.js";
 import sessionsRouter from "./routes/sessionRoutes.js";
+import process from "process";
+import dotenv from "dotenv";
+
+dotenv.config({ path: "../.env" });
 
 const app = express();
 const port = 8080;
 
-const uri =
-  "mongodb+srv://gcarminatti:xKWO60ZiUXwGFumw@ecommercecoder.tbzf3xq.mongodb.net/ecommerce_login";
+const uri = process.env.VITE_DB_URI;
 const options = {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -32,8 +35,7 @@ app.use(express.static(__dirname + "/public"));
 app.use(
   session({
     store: new MongoStore({
-      mongoUrl:
-        "mongodb+srv://gcarminatti:xKWO60ZiUXwGFumw@ecommercecoder.tbzf3xq.mongodb.net/ecommerce_login",
+      mongoUrl: process.env.VITE_DB_URI,
       ttl: 3600,
     }),
     secret: "Termolar1234!",
