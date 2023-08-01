@@ -1,0 +1,11 @@
+<h1>Bienvenido, {{email}}!</h1>
+<h2>Tus productos:</h2>
+<ul>
+  {{#each products}}
+    <li>
+      <strong>{{title}}</strong>
+      <p>{{description}}</p>
+      <p>Precio: {{price}}</p>
+    </li>
+  {{/each}}
+</ul>

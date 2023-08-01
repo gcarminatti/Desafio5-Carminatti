@@ -4,10 +4,11 @@ import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 import handlebars from "express-handlebars";
 import __dirname from "./utils.js";
-import viewsRouter from "./routes/userRoutes.js";
+import userRouter from "./routes/userRoutes.js";
 import sessionsRouter from "./routes/sessionRoutes.js";
 import process from "process";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
 
 dotenv.config({ path: "../.env" });
 
@@ -48,7 +49,7 @@ app.engine("handlebars", handlebars.engine());
 app.set("views", __dirname + "/views");
 app.set("view engine", "handlebars");
 
-app.use("/", viewsRouter);
+app.use("/", userRouter);
 app.use("/api/sessions", sessionsRouter);
 
 const server = app.listen(port, () =>
