@@ -8,7 +8,6 @@ import userRouter from "./routes/userRoutes.js";
 import sessionsRouter from "./routes/sessionRoutes.js";
 import process from "process";
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
 
 dotenv.config({ path: "../.env" });
 

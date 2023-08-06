@@ -3,7 +3,6 @@ import User from "../models/users.js";
 import Product from "../models/products.js";
 import jwt from "jsonwebtoken";
 
-//Password Hass
 import bcrypt from "bcrypt";
 
 const router = Router();
@@ -22,65 +21,49 @@ router.get("/register", (req, res) => {
   res.render("register");
 });
 
+router.get("/products", async (req, res) => {
+  try {
+    // Obtener todos los productos de la base de datos
+    const products = await Product.find({}).lean();
+
+    // Renderiza la vista "products.handlebars" y pasa los productos como datos
+
+    res.render("products", { products });
+  } catch (err) {
+    console.error("Error al obtener los productos:", err);
+    res.status(500).json({ error: "Error al obtener los productos" });
+  }
+});
+
 // login endpoint
-router.post("/login", (request, response) => {
-  // check if email exists
-  User.findOne({ email: request.body.email })
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
 
-    // if email exists
-    .then((user) => {
-      // compare the password entered and the hashed password found
-      bcrypt
-        .compare(request.body.password, user.password)
+  try {
+    const user = await User.findOne({ email });
 
-        // if the passwords match
-        .then((passwordCheck) => {
-          // check if password matches
-          if (!passwordCheck) {
-            return response.status(400).send({
-              message: "Passwords does not match",
-              error,
-            });
-          }
+    if (!user) {
+      return res.status(404).json({ error: "Email not found" });
+    }
 
-          //   create JWT token
-          const token = jwt.sign(
-            {
-              userId: user._id,
-              userEmail: user.email,
-            },
-            "RANDOM-TOKEN",
-            { expiresIn: "24h" }
-          );
+    const passwordMatch = await bcrypt.compare(password, user.password);
 
-          //   return success response
+    if (!passwordMatch) {
+      return res.status(400).json({ error: "Passwords do not match" });
+    }
 
-          Product.find({})
-            .lean() // Convertir los documentos de Mongoose en objetos planos
-            .then((products) => {
-              response.render("products", {
-                message: "Login Successful",
-                email: user.email,
-                token,
-                products, // Pasamos los productos a la vista "productos.handlebars"
-              });
-            });
-        })
-        // catch error if password does not match
-        .catch((error) => {
-          response.status(400).send({
-            message: "Passwords does not match",
-            error,
-          });
-        });
-    })
-    // catch error if email does not exist
-    .catch((e) => {
-      response.status(404).send({
-        message: "Email not found",
-        e,
-      });
-    });
+    // El usuario se ha autenticado con éxito, ahora verifica su rol
+    if (user.role === "admin") {
+      // Si el usuario tiene role "admin", muestra la vista adminView
+      return res.render("adminView", { email: user.email });
+    } else {
+      // Si es un usuario con role "user" , redirige a /products
+      return res.redirect("/products");
+    }
+  } catch (err) {
+    console.error("Error al iniciar sesión:", err);
+    return res.status(500).json({ error: "Error al iniciar sesión" });
+  }
 });
 
 // register endpoint
@@ -89,23 +72,24 @@ router.post("/register", (request, response) => {
   bcrypt
     .hash(request.body.password, 10)
     .then((hashedPassword) => {
-      // create a new user instance and collect the data
+      // Crea una nueva instancia de usuario y recolecta los datos
       const user = new User({
         email: request.body.email,
         password: hashedPassword,
+        role: request.body.role,
       });
 
-      // save the new user
+      // Guarda el usuario
       user
         .save()
-        // return success if the new user is added to the database successfully
+        // Retorno en caso de que el usuario sea creado exitosamente
         .then((result) => {
           response.status(201).send({
             message: "User Created Successfully",
             result,
           });
         })
-        // catch error if the new user wasn't added successfully to the database
+        // Catch en casa de error al crear el usuario
         .catch((error) => {
           response.status(500).send({
             message: "Error creating user",
@@ -113,7 +97,7 @@ router.post("/register", (request, response) => {
           });
         });
     })
-    // catch error if the password hash isn't successful
+    // Catch en caso de problemas con la password
     .catch((e) => {
       response.status(500).send({
         message: "Password was not hashed successfully",
